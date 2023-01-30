@@ -25,7 +25,7 @@ from detect import detect_light, attempt_load, select_device  # noqa: E402
 #sys.path.pop()
 print("import 완료")
 
-device = '0'
+device = 'cpu'
 device = select_device(device)
 weights = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/src/yolov7.pt'
 model = attempt_load(weights, map_location=device)

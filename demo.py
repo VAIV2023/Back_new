@@ -4,7 +4,6 @@ import shutil
 from os import path
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
-from predict_newDemo import discover
 from backtesting import backtest
 import find_sell as yd
 from stockdata import load_naver, load_csv_data, modifyStock, nullCheck
