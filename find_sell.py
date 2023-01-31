@@ -27,7 +27,7 @@ print("import 완료")
 
 device = 'cpu'
 device = select_device(device)
-weights = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/src/yolov7.pt'
+weights = '/home/ubuntu/Back_new/yolo/src/yolov7.pt'
 model = attempt_load(weights, map_location=device)
 
 
@@ -52,7 +52,7 @@ def default_vaiv() -> VAIV:
 
 def default_opt(vaiv: VAIV):
     opt = {
-        'weights': '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/weights_KOSPI50/best.pt',
+        'weights': '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt',
         'conf_thres': 0.6,
         'device': '0',
         'model': model,
@@ -98,7 +98,7 @@ def detect_list(tickers, trade_date, market='Kospi'):
     vaiv.set_image()
     vaiv.set_labeling()
     opt = default_opt(vaiv)
-    opt['weights'] = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/weights_KOSPI50/best.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt'
     sell_tickers = {}
     source = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/today/')
     save_dir = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/predict/')
@@ -205,7 +205,7 @@ def detect_MarketFiles(trade_date, market):
     # fileDetectStart = time.time()
     files = list(map(str, filesPath.glob(f'*{trade_date}.png')))
     # print('FileTime: ', time.time() - fileDetectStart)
-    opt['weights'] = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/weights_KOSPI50/best.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt'
     df = detect_light(**opt, files=files)
     tickers = df.Ticker.tolist()
     probs = df.Probability.tolist()
@@ -286,7 +286,7 @@ def detect_Test(tickers, trade_date, market):
     vaiv.make_dir(common=True, image=True)
     vaiv.set_labeling()
     opt = default_opt(vaiv)
-    opt['weights'] = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/weights_KOSPI50/best.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt'
 
     manager = mp.Manager()
     result_dict = manager.dict()
@@ -345,7 +345,7 @@ def detect_first(tickers, trade_date, market):
     vaiv.make_dir(common=True, image=True)
     vaiv.set_labeling()
     opt = default_opt(vaiv)
-    opt['weights'] = '/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo/src/yolov7.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/src/yolov7.pt'
 
     notFound = {}
     e1 = time.time()
