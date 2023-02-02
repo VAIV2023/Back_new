@@ -71,7 +71,7 @@ def detect_only_cpu(
     colors = [[121, 216, 119], [63, 63, 219], [128, 128, 128]]
 
     # Run inference
-    print("inference???")
+    print(f"device type : {device.type}")
     if device.type != 'cpu':
         model(
             torch.zeros(
@@ -97,7 +97,8 @@ def detect_only_cpu(
         })
 
         img = torch.from_numpy(img).to(device)
-        img = img.half() if half else img.float()  # uint8 to fp16/32
+        #img = img.half() if half else img.float()  # uint8 to fp16/32
+        img = img.float()
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
@@ -118,8 +119,9 @@ def detect_only_cpu(
             s += '%gx%g ' % img.shape[2:]  # print string
             # normalization gain whwh
             # gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
-            print("!!")
+
             if len(det):
+                print(det)
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(
                     img.shape[2:], det[:, :4], im0.shape
