@@ -23,7 +23,7 @@ from utils_yolo.pixel import StockImage
 from utils_yolo.torch_utils import select_device, load_classifier, \
     TracedModel
 
-ROOT = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/yolo')
+ROOT = Path('/home/ubuntu/Back_new/yolo')
 
 from manager import VAIV  # noqa: E402
 
@@ -38,7 +38,7 @@ def detect_light(
             trace=False,
             model=None,
             vaiv=VAIV(ROOT),
-            save_dir=Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/predict')
+            save_dir=Path('/home/ubuntu/Back_new/static/predict')
         ):
         
     # Initialize

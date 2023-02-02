@@ -71,7 +71,7 @@ def copy_image(tickers, trade_date, market):
     vaiv.set_prediction()
     vaiv.set_image()
     vaiv.set_labeling()
-    source = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/today')
+    source = Path('/home/ubuntu/Back_new/static/today')
     source.mkdir(parents=True, exist_ok=True)
 
     notFound = {}
@@ -100,8 +100,8 @@ def detect_list(tickers, trade_date, market='Kospi'):
     opt = default_opt(vaiv)
     opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt'
     sell_tickers = {}
-    source = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/today/')
-    save_dir = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/predict/')
+    source = Path('/home/ubuntu/Back_new/static/today/')
+    save_dir = Path('/home/ubuntu/Back_new/static/predict/')
     source.mkdir(parents=True, exist_ok=True)
 
     notFound = {}
@@ -142,14 +142,14 @@ def detect_list(tickers, trade_date, market='Kospi'):
     ret = {t: [s, p, start, end] for t, s, p, start, end in zip(tickers, signals, probs, starts, ends)}
     ret.update(notFound)
     try:
-        shutil.rmtree('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/today')
+        shutil.rmtree('/home/ubuntu/Back_new/static/today')
     except FileNotFoundError:
         pass
     return ret
 
 
 def detect_all(temp_date):
-    df = pd.read_csv('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/Stock.csv', index_col=0)
+    df = pd.read_csv('/home/ubuntu/Back_new/static/Stock.csv', index_col=0)
     kospiTickers = df[df['Market'] == 'STK'].index.tolist()
     kosdaqTickers = df[df['Market'] == 'KSQ'].index.tolist()
 
@@ -190,7 +190,7 @@ def detect_all(temp_date):
     print('Kosdaq Time: ', kosdaqT - kospiT)
     print('After Detect Time: ', end - kosdaqT)
     detect = pd.concat(stock_list)
-    detect.to_csv('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/Detection.csv')
+    detect.to_csv('/home/ubuntu/Back_new/static/Detection.csv')
 
 
 def detect_MarketFiles(trade_date, market):
@@ -217,7 +217,7 @@ def detect_MarketFiles(trade_date, market):
 
 
 def detectAllFiles():
-    df = pd.read_csv('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/Stock.csv', index_col=0)
+    df = pd.read_csv('/home/ubuntu/Back_new/static/Stock.csv', index_col=0)
 
     today = datetime.today()
     yesterday = today - timedelta(1)
@@ -275,9 +275,9 @@ def make_process(vaiv, ticker, trade_date, result_dict):
 
 def detect_Test(tickers, trade_date, market):
     s1 = time.time()
-    source = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/RealTime/')
+    source = Path('/home/ubuntu/Back_new/static/RealTime/')
     source.mkdir(parents=True, exist_ok=True)
-    save_dir = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/predict/')
+    save_dir = Path('/home/ubuntu/Back_new/static/predict/')
     vaiv = default_vaiv()
     vaiv.set_kwargs(market=market)
     vaiv.set_stock()
@@ -334,9 +334,9 @@ def detect_Test(tickers, trade_date, market):
 
 def detect_first(tickers, trade_date, market):
     s1 = time.time()
-    source = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/RealTime/')
+    source = Path('/home/ubuntu/Back_new/static/RealTime/')
     source.mkdir(parents=True, exist_ok=True)
-    save_dir = Path('/home/work/VAIV2023_BackEnd/VAIV2023_BackEnd-main/Backend-main/flask/static/predict/')
+    save_dir = Path('/home/ubuntu/Back_new/static/predict/')
     vaiv = default_vaiv()
     vaiv.set_kwargs(market=market)
     vaiv.set_stock()

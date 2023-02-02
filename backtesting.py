@@ -325,13 +325,13 @@ def backtest( start, end, model_list, fore, topX,   sellProfit, kos, label_list)
     #####################################################################
     # plt.title(f'Profit')
     
-    figName =f'/home/ubuntu/2022_VAIV_Dataset/flask/static/images/cumulative_profit.png'
+    figName =f'/home/ubuntu/Back_new/static/images/cumulative_profit.png'
     plt.savefig(figName)
 
-    img = Image.open('/home/ubuntu/2022_VAIV_Dataset/flask/static/images/cumulative_profit.png')
+    img = Image.open('/home/ubuntu/Back_new/static/images/cumulative_profit.png')
 
     img_resize = img.resize((440, 350)) 
-    img_resize.save('/home/ubuntu/2022_VAIV_Dataset/flask/static/images/cumulative_profit.png')
+    img_resize.save('/home/ubuntu/Back_new/static/images/cumulative_profit.png')
     plt.close()
 
 
@@ -374,13 +374,13 @@ def backtest( start, end, model_list, fore, topX,   sellProfit, kos, label_list)
     plt.gca().spines['left'].set_visible(False)
     # ax = plt.gca()
     # ax.axes.yaxis.set_visible(False)
-    figName2 =f'/home/ubuntu/2022_VAIV_Dataset/flask/static/images/winning_rate.png'
+    figName2 =f'/home/ubuntu/Back_new/static/images/winning_rate.png'
     plt.savefig(figName2)
     plt.close()
-    img = Image.open('/home/ubuntu/2022_VAIV_Dataset/flask/static/images/winning_rate.png')
+    img = Image.open('/home/ubuntu/Back_new/static/images/winning_rate.png')
 
     img_resize = img.resize((350, 350)) 
-    img_resize.save('/home/ubuntu/2022_VAIV_Dataset/flask/static/images/winning_rate.png')
+    img_resize.save('/home/ubuntu/Back_new/static/images/winning_rate.png')
     for i in range(len(final_profit_list)):
       print(final_profit_list[i])
     #print("cuml profit : ", round(no_list[-1],3))

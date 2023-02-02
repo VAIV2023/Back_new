@@ -43,7 +43,7 @@ def auto_buy():
   numOfStock = "20"
 
 
-  filename = f'/home/ubuntu/2022_VAIV_Dataset/flask/static/today_results/{date}_{stockMarket}_{numOfStock}.json'
+  filename = f'/home/ubuntu/Back_new/static/today_results/{date}_{stockMarket}_{numOfStock}.json'
   with open(filename, 'r') as json_file:
     result_dict = json.load(json_file)
   loadStocklist = result_dict['results']
@@ -98,7 +98,7 @@ def auto_buy():
               )
 
               # modify 'total buy'
-              total_buy = d['total buy']  # ÃÑ ¸ÅÀÔ
+              total_buy = d['total buy']  # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
               
               total_buy += int(buy_total)
 
@@ -158,7 +158,7 @@ def auto_buy():
               )
 
               # modify 'total buy'
-              total_buy = d['total buy']  # ÃÑ ¸ÅÀÔ
+              total_buy = d['total buy']  # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
               
               total_buy += int(buy_total)
 
@@ -181,7 +181,7 @@ def current_close_by_ticker(ticker):
         s = requests.Session()
         url = "https://finance.naver.com/item/main.nhn?code=" + ticker[1:]
         resp = s.get(url)
-        currentClose = resp.text.split("<dd>ÇöÀç°¡ ")[1].split(' ')[0].replace(",","")
+        currentClose = resp.text.split("<dd>ï¿½ï¿½ï¿½ç°¡ ")[1].split(' ')[0].replace(",","")
     except:
         currentClose = 0
     return currentClose
@@ -241,14 +241,14 @@ def auto_sell():
                 total_real_gain+=real_gain
 
       # modify 'total buy'
-      total_buy = d['total buy']  # ÃÑ ¸ÅÀÔ
+      total_buy = d['total buy']  # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
       
       total_buy -= int(total_remove_buy)
 
       print(f"\ntotal buy : {total_buy}")
 
       # modify 'real gain'
-      new_real_gain = d['real gain']  # ½ÇÇö ¼ÕÀÍ
+      new_real_gain = d['real gain']  # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
       new_real_gain += total_real_gain
       db.asset.update_one(
           {"id":user_id},
@@ -263,11 +263,11 @@ def auto_sell():
 
 
 if __name__ == '__main__':
-  # ½ÇÇà ÁÖ±â ¼³Á¤
+  # ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½ ï¿½ï¿½ï¿½ï¿½
   # Updating Stock Data
-  schedule.every().day.at("15:30").do(update_stock)   # ¸ÅÀÏ ¿ÀÈÄ 3½Ã 30ºÐ¿¡ update_stock ÇÔ¼ö ½ÇÇà
+  schedule.every().day.at("15:30").do(update_stock)   # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 3ï¿½ï¿½ 30ï¿½Ð¿ï¿½ update_stock ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½ï¿½
   #update_stock()
 
-  # ½ÇÇà ½ÃÀÛ
+  # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
   while True:
       schedule.run_pending()

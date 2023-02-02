@@ -25,7 +25,7 @@ app = Flask(__name__)
 
 trade_date = ''
 yolo_detect = {'Kospi': {}, 'Kosdaq': {}}
-stockInfo = pd.read_csv('/home/ubuntu/2022_VAIV_Dataset/flask/static/Stock.csv', index_col=0)
+stockInfo = pd.read_csv('/home/ubuntu/Back_new/static/Stock.csv', index_col=0)
 
 
 def current_close_by_ticker(ticker):
@@ -65,7 +65,7 @@ def yolo_buy(tickerlist, s_date, market):
     #     yolo_detect.update({'Kospi': {}, 'Kosdaq': {}})
     #     trade_date = t_date
     #     try:
-    #         shutil.rmtree('/home/ubuntu/2022_VAIV_Dataset/flask/static/predict')
+    #         shutil.rmtree('/home/ubuntu/Back_new/static/predict')
     #     except FileNotFoundError:
     #         pass
     # if not yolo_detect.get(market):
@@ -520,7 +520,7 @@ def predict_discover():
             date = open_dates[-2]   #어제 날짜 입력
         print(open_dates)
 
-        filename = f'/home/ubuntu/2022_VAIV_Dataset/flask/static/today_results/{date}_{stockMarket}_{numOfStock}.json'
+        filename = f'/home/ubuntu/Back_new/static/today_results/{date}_{stockMarket}_{numOfStock}.json'
 
         ensemble_prob = []
         ensemble_result = []
