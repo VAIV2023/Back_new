@@ -27,10 +27,145 @@ ROOT = Path('/home/ubuntu/Back_new/yolo')
 
 from manager import VAIV  # noqa: E402
 
+def detect_only_cpu(
+            weights='../weights_KOSPI50/best.pt',
+            source='inference/images',
+            files=None,     # detect 할 이미지
+            imgsz=640,
+            conf_thres=0,
+            iou_thres=0.45,
+            device='',
+            trace=False,
+            model=None,
+            vaiv=VAIV(ROOT),
+            save_dir=Path('/home/ubuntu/Back_new/static/predict')
+        ):
+        
+    # Initialize
+    #device = select_device(device)
+    #half = device.type != 'cpu'  # half precision only supported on CUDA
+    device = torch.device('cpu')
+
+    (save_dir).mkdir(parents=True, exist_ok=True)
+
+    # Load model
+    if not model:
+        model = attempt_load(weights, map_location=device)  # load FP32 model
+    stride = int(model.stride.max())  # model stride
+    imgsz = check_img_size(imgsz, s=stride)  # check img_size
+    if trace:
+        print("trace???")
+        model = TracedModel(model, device, imgsz)
+
+    # if half:
+    #     model.half()  # to FP16
+
+    # Set Dataloader
+    # source = source.strip()
+    if not files:
+        dataset = LoadImages(source, img_size=imgsz, stride=stride)
+    else:
+        dataset = LoadFilesImages(files, img_size=imgsz, stride=stride)
+    # Get names and colors
+    names = model.module.names if hasattr(model, 'module') else model.names
+    colors = [[121, 216, 119], [63, 63, 219], [128, 128, 128]]
+
+    # Run inference
+    print("inference???")
+    if device.type != 'cpu':
+        model(
+            torch.zeros(
+                1, 3, imgsz, imgsz
+            ).to(device).type_as(next(model.parameters()))
+        )  # run once
+    # t0 = time.time()
+
+    df_list = []
+    for path, img, im0s in (dataset):
+        # 각 이미지마다 진행
+        stockimg = StockImage(path, vaiv)
+        # box = {}  # trade_date: df
+        probability = 0
+        # is_signal = False
+
+        new_df = pd.DataFrame({
+            'Ticker': [stockimg.ticker],
+            'Signal': ['hold'],
+            'Probability': [0],
+            'Start': [''],
+            'End': [''],
+        })
+
+        img = torch.from_numpy(img).to(device)
+        img = img.half() if half else img.float()  # uint8 to fp16/32
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
+
+        # Inference
+        pred = model(img)[0]
+        print({f"length of pred : {len(pred)}"})
+
+        # Apply NMS
+        pred = non_max_suppression(pred, conf_thres, iou_thres)
+        
+        # Process detections
+        for i, det in enumerate(pred):  # detections per image
+            p, s, im0 = path, '', im0s
+
+            p = Path(p)  # to Path
+            save_path = str(save_dir / p.name)
+            s += '%gx%g ' % img.shape[2:]  # print string
+            # normalization gain whwh
+            # gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+            print("!!")
+            if len(det):
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_coords(
+                    img.shape[2:], det[:, :4], im0.shape
+                ).round()
+                print(det)
+
+                # Write results
+
+                for *xyxy, conf, cls in reversed(det):
+                    # 각 박스마다 기록
+                    pixel_col = torch.tensor(xyxy).cpu().detach().numpy()
+                    xmin, xmax = pixel_col[0], pixel_col[2]
+                    signal = names[int(cls)]
+
+                    probability = round(float(conf), 3)
+                    if stockimg.last_signal(xmin, xmax, 1):
+                        dates = stockimg.get_box_date(xmin, xmax)
+                        # print('Last: ', dates)
+                        new_df = pd.DataFrame({
+                            'Ticker': [stockimg.ticker],
+                            'Signal': [signal],
+                            'Probability': [probability],
+                            'Start': [dates[0]],
+                            'End': [dates[-1]],
+                        })
+
+                        label = f'{names[int(cls)]} {conf:.2f}'
+                        plot_one_box(
+                            xyxy, im0, label=label,
+                            color=colors[int(cls)],
+                            line_thickness=2
+                        )
+                        break
+
+        df_list.append(new_df)
+        cv2.imwrite(save_path, im0)
+
+    df = pd.concat(df_list)
+    return df
+
+
+
 def detect_light(
             weights='../weights_KOSPI50/best.pt',
             source='inference/images',
-            files=None,
+            files=None,     # detect 할 이미지
             imgsz=640,
             conf_thres=0,
             iou_thres=0.45,

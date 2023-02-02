@@ -20,7 +20,7 @@ sys.path.append(str(ROOT / 'yolo' / 'src'))
 from manager import VAIV  # noqa: E402
 from stock import make_stock  # noqa: E402
 from candlestick import make_candlestick  # noqa: E402
-from detect import detect_light, attempt_load, select_device  # noqa: E402
+from detect import detect_light, attempt_load, select_device, detect_only_cpu  # noqa: E402
 
 #sys.path.pop()
 print("import 완료")
@@ -132,7 +132,7 @@ def detect_list(tickers, trade_date, market='Kospi'):
     if not files:
         return notFound
 
-    df = detect_light(**opt, files=files)
+    df = detect_only_cpu(**opt, files=files)
     # df = df[df.Signal == 'sell']
     tickers = df.Ticker.tolist()
     probs = df.Probability.tolist()
@@ -399,7 +399,7 @@ def detect_first(tickers, trade_date, market):
     if len(tickers) == len(notFound):
         return notFound
         # return notFound, [0, 0, 0, 0, 0]
-    df = detect_light(**opt, source=vaiv.common.image.get('images'), save_dir=save_dir, files=files)
+    df = detect_only_cpu(**opt, source=vaiv.common.image.get('images'), save_dir=save_dir, files=files)
     e4 = time.time()
     # print(f'Tickers Detect: {round(e4-s4, 2)}s')
     # print(f'{ticker_count}/{len(tickers)} Tickers Detect: {round(e4-s4, 2)}s')
