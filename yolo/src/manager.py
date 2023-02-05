@@ -8,6 +8,7 @@ from pathlib import Path
 
 class FileManager:
     def set_fname(self, extension, **kwargs):
+        print(kwargs.values())
         values = '_'.join(kwargs.values())
         self.fname = f'{values}.{extension}'
 

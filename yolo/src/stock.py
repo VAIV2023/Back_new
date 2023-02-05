@@ -11,7 +11,7 @@ from tqdm import tqdm
 import pandas as pd
 
 from manager import VAIV  # noqa: E402
-from utils.stock_format import correction  # noqa: E402
+from utils.stock_format_origin import correction  # noqa: E402
 
 
 # market을 set 하고, 각 market마다 추가된 종목 있으면 업데이트

@@ -23,22 +23,166 @@ from utils_yolo.pixel import StockImage
 from utils_yolo.torch_utils import select_device, load_classifier, \
     TracedModel
 
-p = Path('/home/ubuntu/Back_new/')
-def detect_light(
-            weights='yolov7.pt',
+ROOT = Path('/home/ubuntu/Back_new/yolo')
+
+from manager import VAIV  # noqa: E402
+
+#../weights_KOSPI50/best.pt
+def detect_only_cpu(
+            weights='/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt',
             source='inference/images',
-            files=None,
+            files=None,     # detect 할 이미지
             imgsz=640,
-            conf_thres=0.25,
+            conf_thres=0,
             iou_thres=0.45,
             device='',
             trace=False,
             model=None,
-            save_dir=(p / 'runs' / 'detect')
+            vaiv=VAIV(ROOT),
+            save_dir=Path('/home/ubuntu/Back_new/static/predict')
         ):
+        
     # Initialize
-    device = torch.device('cpu')
+    #device = select_device(device)
     #half = device.type != 'cpu'  # half precision only supported on CUDA
+    device = torch.device('cpu')
+
+    (save_dir).mkdir(parents=True, exist_ok=True)
+
+    print(f"weights : {weights}")
+    
+    # Load model
+    if not model:
+        model = attempt_load(weights, map_location=device)  # load FP32 model
+    stride = int(model.stride.max())  # model stride
+    imgsz = check_img_size(imgsz, s=stride)  # check img_size
+    if trace:
+        model = TracedModel(model, device, imgsz)
+
+    # if half:
+    #     model.half()  # to FP16
+
+    # Set Dataloader
+    # source = source.strip()
+    if not files:
+        dataset = LoadImages(source, img_size=imgsz, stride=stride)
+    else:
+        dataset = LoadFilesImages(files, img_size=imgsz, stride=stride)
+    # Get names and colors
+    names = model.module.names if hasattr(model, 'module') else model.names
+    colors = [[121, 216, 119], [63, 63, 219], [128, 128, 128]]
+
+    # Run inference
+    print(f"device type : {device.type}")
+    if device.type != 'cpu':
+        model(
+            torch.zeros(
+                1, 3, imgsz, imgsz
+            ).to(device).type_as(next(model.parameters()))
+        )  # run once
+    # t0 = time.time()
+
+    df_list = []
+    for path, img, im0s in (dataset):
+        # 각 이미지마다 진행
+        stockimg = StockImage(path, vaiv)
+        # box = {}  # trade_date: df
+        probability = 0
+        # is_signal = False
+
+        new_df = pd.DataFrame({
+            'Ticker': [stockimg.ticker],
+            'Signal': ['hold'],
+            'Probability': [0],
+            'Start': [''],
+            'End': [''],
+        })
+
+        img = torch.from_numpy(img).to(device)
+        #img = img.half() if half else img.float()  # uint8 to fp16/32
+        img = img.float()
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
+
+        # Inference
+        pred = model(img)[0]
+        print({f"length of pred : {len(pred)}"})
+
+        # Apply NMS
+        pred = non_max_suppression(pred, conf_thres, iou_thres)
+        
+        # Process detections
+        for i, det in enumerate(pred):  # detections per image
+            p, s, im0 = path, '', im0s
+
+            p = Path(p)  # to Path
+            save_path = str(save_dir / p.name)
+            s += '%gx%g ' % img.shape[2:]  # print string
+            # normalization gain whwh
+            # gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+
+            if len(det):
+                print(det)
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_coords(
+                    img.shape[2:], det[:, :4], im0.shape
+                ).round()
+                print(det)
+
+                # Write results
+
+                for *xyxy, conf, cls in reversed(det):
+                    # 각 박스마다 기록
+                    pixel_col = torch.tensor(xyxy).cpu().detach().numpy()
+                    xmin, xmax = pixel_col[0], pixel_col[2]
+                    signal = names[int(cls)]
+
+                    probability = round(float(conf), 3)
+                    if stockimg.last_signal(xmin, xmax, 1):
+                        dates = stockimg.get_box_date(xmin, xmax)
+                        # print('Last: ', dates)
+                        new_df = pd.DataFrame({
+                            'Ticker': [stockimg.ticker],
+                            'Signal': [signal],
+                            'Probability': [probability],
+                            'Start': [dates[0]],
+                            'End': [dates[-1]],
+                        })
+
+                        label = f'{names[int(cls)]} {conf:.2f}'
+                        plot_one_box(
+                            xyxy, im0, label=label,
+                            color=colors[int(cls)],
+                            line_thickness=2
+                        )
+                        break
+
+        df_list.append(new_df)
+        cv2.imwrite(save_path, im0)
+
+    df = pd.concat(df_list)
+    return df
+
+
+
+def detect_light(
+            weights='../weights_KOSPI50/best.pt',
+            source='inference/images',
+            files=None,     # detect 할 이미지
+            imgsz=640,
+            conf_thres=0,
+            iou_thres=0.45,
+            device='',
+            trace=False,
+            model=None,
+            vaiv=VAIV(ROOT),
+            save_dir=Path('/home/ubuntu/Back_new/static/predict')
+        ):
+        
+    # Initialize
+    device = select_device(device)
+    half = device.type != 'cpu'  # half precision only supported on CUDA
 
     (save_dir).mkdir(parents=True, exist_ok=True)
 
@@ -50,8 +194,8 @@ def detect_light(
     if trace:
         model = TracedModel(model, device, imgsz)
 
-    #if half:
-    #    model.half()  # to FP16
+    if half:
+        model.half()  # to FP16
 
     # Set Dataloader
     # source = source.strip()
@@ -75,8 +219,8 @@ def detect_light(
     df_list = []
     for path, img, im0s in (dataset):
         # 각 이미지마다 진행
-        stockimg = StockImage(path)
-        # box = {}  # last_date: df
+        stockimg = StockImage(path, vaiv)
+        # box = {}  # trade_date: df
         probability = 0
         # is_signal = False
 
@@ -89,17 +233,18 @@ def detect_light(
         })
 
         img = torch.from_numpy(img).to(device)
-        img = img.float()   #img.half() if half else img.float()  # uint8 to fp16/32
+        img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
 
         # Inference
         pred = model(img)[0]
+        print({f"length of pred : {len(pred)}"})
 
         # Apply NMS
         pred = non_max_suppression(pred, conf_thres, iou_thres)
-        print(pred)
+        
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             p, s, im0 = path, '', im0s
@@ -109,11 +254,13 @@ def detect_light(
             s += '%gx%g ' % img.shape[2:]  # print string
             # normalization gain whwh
             # gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+            print("!!")
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(
                     img.shape[2:], det[:, :4], im0.shape
                 ).round()
+                print(det)
 
                 # Write results
 
@@ -156,7 +303,7 @@ def detect(
             weights='yolov7.pt',
             source='inference/images',
             imgsz=640,
-            conf_thres=0.25,
+            conf_thres=0,
             iou_thres=0.45,
             device='',
             save_txt=False,
@@ -164,6 +311,7 @@ def detect(
             name='exp',
             exist_ok=False,
             trace=True,
+            vaiv=VAIV(ROOT)
         ):
 
     # Directories
@@ -176,9 +324,8 @@ def detect(
 
     # Initialize
     set_logging()
-    device = torch.device('cpu')
-    #device = select_device(device)
-    #half = device.type != 'cpu'  # half precision only supported on CUDA
+    device = select_device(device)
+    half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
     model = attempt_load(weights, map_location=device)  # load FP32 model
@@ -220,10 +367,10 @@ def detect(
     pbar = tqdm(total=len(dataset))
     for path, img, im0s in dataset:
         # 각 이미지마다 진행
-        stockimg = StockImage(path)
-        if stockimg.get_trade_close(stockimg.last_date) == 0:
+        stockimg = StockImage(path, vaiv)
+        if stockimg.get_trade_close(stockimg.trade_date) == 0:
             continue
-        box = {}  # last_date: df
+        box = {}  # trade_date: df
         if stockimg.ticker not in signals:
             signals[stockimg.ticker] = box
         probability = 0
@@ -276,7 +423,7 @@ def detect(
                     xmin, xmax = pixel_col[0], pixel_col[2]
                     dates = stockimg.get_box_date(xmin, xmax)
                     if len(dates) == 0:
-                        print(stockimg.ticker, stockimg.last_date, pixel_col)
+                        print(stockimg.ticker, stockimg.trade_date, pixel_col)
                         continue
                     signal = names[int(cls)]
 
@@ -284,25 +431,25 @@ def detect(
 
                     if pair == 0:
                         probability = round(float(conf), 3)
-                        last_date = stockimg.get_last_date(dates)
-                        close = stockimg.get_trade_close(last_date)
-                        df = signals[stockimg.ticker].get(last_date)
-                        
+                        trade_date = stockimg.get_trade_date(dates)
+                        close = stockimg.get_trade_close(trade_date)
+                        df = signals[stockimg.ticker].get(trade_date)
+
                         if df is None:
-                            signals[stockimg.ticker][last_date] = pd.DataFrame({
+                            signals[stockimg.ticker][trade_date] = pd.DataFrame({
                                 'Ticker': [stockimg.ticker],
-                                'Date': [last_date],
+                                'Date': [trade_date],
                                 'Label': [signal],
                                 'Close': [close],
                                 'Probability': [probability],
                                 'Range': ['/'.join(dates)],
-                                'Detect': [stockimg.last_date]
+                                'Detect': [stockimg.trade_date]
                             })
                             if stockimg.last_signal(xmin, xmax, 3):
                                 is_signal = True
                         else:
                             if df.Label[0] != signal:
-                                signals[stockimg.ticker].pop(last_date)
+                                signals[stockimg.ticker].pop(trade_date)
                                 is_signal = False
 
                         if save_txt and is_signal:  # Write to file
@@ -323,12 +470,12 @@ def detect(
 
                     if pair == 1 and signal == "buy":
                         probability = round(float(conf), 3)
-                        last_date = stockimg.get_last_date(dates)
-                        close = stockimg.get_trade_close(last_date)
-                        df = signals[stockimg.ticker].get(last_date)
+                        trade_date = stockimg.get_trade_date(dates)
+                        close = stockimg.get_trade_close(trade_date)
+                        df = signals[stockimg.ticker].get(trade_date)
 
                         # This is where we get the close price of five days later
-                        begin_date = datetime.strptime(last_date, "%Y-%m-%d")
+                        begin_date = datetime.strptime(trade_date, "%Y-%m-%d")
                         five_days_later = begin_date + timedelta(days=5)
 
                     #    five_days_later = stockimg.stock[begin_date + timedelta(days=5)]
@@ -358,14 +505,14 @@ def detect(
                         # End
 
                         if df is None:
-                            signals[stockimg.ticker][last_date] = pd.DataFrame({
+                            signals[stockimg.ticker][trade_date] = pd.DataFrame({
                                 'Ticker': [stockimg.ticker],
-                                'Date': [last_date],
+                                'Date': [trade_date],
                                 'Label': [signal],
                                 'Close': [close],
                                 'Probability': [probability],
                                 'Range': ['/'.join(dates)],
-                                'Detect': [stockimg.last_date],
+                                'Detect': [stockimg.trade_date],
                                 'Five': [five_days_later_price],
                                 'End': [end_date]
                             })
@@ -373,7 +520,7 @@ def detect(
                                 is_signal = True
                         else:
                             if df.Label[0] != signal:
-                                signals[stockimg.ticker].pop(last_date)
+                                signals[stockimg.ticker].pop(trade_date)
                                 is_signal = False
 
                         if save_txt and is_signal:  # Write to file
@@ -393,25 +540,25 @@ def detect(
                             )
                     elif pair == 2 and signal == "sell":
                         probability = round(float(conf), 3)
-                        last_date = stockimg.get_last_date(dates)
-                        close = stockimg.get_trade_close(last_date)
-                        df = signals[stockimg.ticker].get(last_date)
+                        trade_date = stockimg.get_trade_date(dates)
+                        close = stockimg.get_trade_close(trade_date)
+                        df = signals[stockimg.ticker].get(trade_date)
 
                         if df is None:
-                            signals[stockimg.ticker][last_date] = pd.DataFrame({
+                            signals[stockimg.ticker][trade_date] = pd.DataFrame({
                                 'Ticker': [stockimg.ticker],
-                                'Date': [last_date],
+                                'Date': [trade_date],
                                 'Label': [signal],
                                 'Close': [close],
                                 'Probability': [probability],
                                 'Range': ['/'.join(dates)],
-                                'Detect': [stockimg.last_date]
+                                'Detect': [stockimg.trade_date]
                             })
                             if stockimg.last_signal(xmin, xmax, 3):
                                 is_signal = True
                         else:
                             if df.Label[0] != signal:
-                                signals[stockimg.ticker].pop(last_date)
+                                signals[stockimg.ticker].pop(trade_date)
                                 is_signal = False
 
                         if save_txt and is_signal:  # Write to file
@@ -439,25 +586,25 @@ def detect(
                                 check = 1
 
                                 probability = round(float(conf), 3)
-                                last_date = stockimg.get_last_date(dates)
-                                close = stockimg.get_trade_close(last_date)
-                                df = signals[stockimg.ticker].get(last_date)
+                                trade_date = stockimg.get_trade_date(dates)
+                                close = stockimg.get_trade_close(trade_date)
+                                df = signals[stockimg.ticker].get(trade_date)
 
                                 if df is None:
-                                    signals[stockimg.ticker][last_date] = pd.DataFrame({
+                                    signals[stockimg.ticker][trade_date] = pd.DataFrame({
                                         'Ticker': [stockimg.ticker],
-                                        'Date': [last_date],
+                                        'Date': [trade_date],
                                         'Label': [signal],
                                         'Close': [close],
                                         'Probability': [probability],
                                         'Range': ['/'.join(dates)],
-                                        'Detect': [stockimg.last_date]
+                                        'Detect': [stockimg.trade_date]
                                     })
                                     if stockimg.last_signal(xmin, xmax, 3):
                                         is_signal = True
                                 else:
                                     if df.Label[0] != signal:
-                                        signals[stockimg.ticker].pop(last_date)
+                                        signals[stockimg.ticker].pop(trade_date)
                                         is_signal = False
 
                                 if save_txt and is_signal:  # Write to file
@@ -485,25 +632,25 @@ def detect(
 
                                 check = 0
                                 probability = round(float(conf), 3)
-                                last_date = stockimg.get_last_date(dates)
-                                close = stockimg.get_trade_close(last_date)
-                                df = signals[stockimg.ticker].get(last_date)
+                                trade_date = stockimg.get_trade_date(dates)
+                                close = stockimg.get_trade_close(trade_date)
+                                df = signals[stockimg.ticker].get(trade_date)
 
                                 if df is None:
-                                    signals[stockimg.ticker][last_date] = pd.DataFrame({
+                                    signals[stockimg.ticker][trade_date] = pd.DataFrame({
                                         'Ticker': [stockimg.ticker],
-                                        'Date': [last_date],
+                                        'Date': [trade_date],
                                         'Label': [signal],
                                         'Close': [close],
                                         'Probability': [probability],
                                         'Range': ['/'.join(dates)],
-                                        'Detect': [stockimg.last_date]
+                                        'Detect': [stockimg.trade_date]
                                     })
                                     if stockimg.last_signal(xmin, xmax, 3):
                                         is_signal = True
                                 else:
                                     if df.Label[0] != signal:
-                                        signals[stockimg.ticker].pop(last_date)
+                                        signals[stockimg.ticker].pop(trade_date)
                                         is_signal = False
 
                                 if save_txt and is_signal:  # Write to file
@@ -531,7 +678,7 @@ def detect(
     for ticker, box in signals.items():
         df_list = []
         save_path = str(save_dir / 'signals' / f'{ticker}.csv')
-        for last_date, df in box.items():
+        for trade_date, df in box.items():
             df_list.append(df)
         try:
             signal_df = pd.concat(df_list, ignore_index=True)
@@ -572,7 +719,7 @@ if __name__ == '__main__':
         help='IOU threshold for NMS'
     )
     parser.add_argument(
-        '--device', default='cpu',
+        '--device', default='',
         help='cuda device, i.e. 0 or 0,1,2,3 or cpu'
     )
     parser.add_argument(
@@ -598,5 +745,21 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     print(opt)
 
+    vaiv = VAIV(ROOT)
+    kwargs = {
+        'market': 'Kospi',
+        'feature': {'Volume': False, 'MA': [-1], 'MACD': False},
+        'offset': 1,
+        'size': [1800, 650],
+        'candle': 245,
+        'linespace': 1,
+        'candlewidth': 0.8,
+        'style': 'default'  # default는 'classic'
+    }
+    vaiv.set_kwargs(**kwargs)
+    vaiv.set_stock()
+    vaiv.set_prediction()
+    vaiv.set_image()
+
     with torch.no_grad():
-        detect(**vars(opt))
+        detect(**vars(opt), vaiv=vaiv)
