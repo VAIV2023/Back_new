@@ -10,7 +10,8 @@ KOSDAQ_df = stock_df.loc[stock_df['Market'] == 'KSQ']
 kospi_list = KOSPI_df.index.to_list()
 kosdaq_list = KOSDAQ_df.index.to_list()
 
-print(f"ticker list : {kospi_list}")
+#print(f"ticker list : {kospi_list}")
 #detect_all("2022-12-01")
 print("\n---Detection start---")
-print(yolo_buy(['095570', '027410', '282330'], '2022-11-25', 'KOSPI'))
+#print(yolo_buy(['095570', '003280', '227840'], '2022-11-25', 'KOSPI'))
+print(yolo_buy(kospi_list, '2022-11-25', 'KOSPI'))

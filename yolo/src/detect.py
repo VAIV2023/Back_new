@@ -99,10 +99,11 @@ def detect_light(
 
         # Apply NMS
         pred = non_max_suppression(pred, conf_thres, iou_thres)
-        print(pred)
+        
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             p, s, im0 = path, '', im0s
+            print(f"i : {i}, det : {det}")
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)

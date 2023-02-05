@@ -383,8 +383,9 @@ class VAIV(FileManager):
                 'Xmin': [], 'Xmax': [],
                 'Ymin': [], 'Ymax': [],
             }
+            print(self.kwargs)
             ticker = self.kwargs['ticker']
-            trade_date = self.kwargs['trade_date']
+            trade_date = self.kwargs['last_date']
             self.set_fname('csv', ticker=ticker, trade_date=trade_date)
             self.set_path(self.common.image['pixels'])
             index = 'Date'
@@ -546,6 +547,6 @@ class VAIV(FileManager):
 
 
 if __name__ == '__main__':
-    ROOT = Path('/home/ubuntu/2022_VAIV_Cho/VAIV')
+    ROOT = Path('//home/ubuntu/Back_new')
     vaiv = VAIV(ROOT)
     vaiv.make_dir(cnn=True, yolo=True, common=True)
