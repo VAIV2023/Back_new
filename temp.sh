@@ -1,0 +1,1 @@
+python yolo/src/detect.py --save-txt --imgsz 640 --trace --weights /home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt --conf 0 --source /home/ubuntu/Back_new/static/predict --name detect19
