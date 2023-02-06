@@ -5,22 +5,7 @@ from datetime import datetime, timedelta
 import exchange_calendars as ecals 
 import pandas as pd
 
-app = Flask(__name__)
-app.config['DEBUG'] = True
-CORS(app)
-
-@app.route("/example", methods=['GET', 'POST'])
-def example():
-    option = request.json
-    print(option)
-    result = { 'stocks' : 'samsung'}
-    
-    return jsonify(result)
-
-@app.route("/showtoppick", methods=['GET', 'POST'])
 def toppick_show():
-    option = request.json
-    print(option)
 
     # 오늘 날짜 그대로 넣으면 안되는구나..
     # 오늘이 개장일이면 오늘 날짜 그대로 입력
@@ -44,9 +29,9 @@ def toppick_show():
             lst.append(line)
 
         res_dict[market] = lst
+        f.close()
     
     print(res_dict)
-    return jsonify(res_dict)
+    return res_dict
 
-if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000)
+toppick_show()
