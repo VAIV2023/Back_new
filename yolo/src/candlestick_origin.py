@@ -18,7 +18,7 @@ def make_pixel(lines, patches, fig, stock, vaiv: VAIV):
     height = vaiv.kwargs.get('size')[1]
     xmin, xmax, ymin, ymax = [[] for i in range(4)]
 
-    print("!!! make pixel !!!")
+    #print("!!! make pixel !!!")
 
     for i in range(len(stock)):
         bbox_x = patches[i].get_window_extent(fig.canvas.get_renderer())
@@ -157,7 +157,7 @@ def make_candlestick(vaiv: VAIV, stock, pred, pixel=True, save_dir=None):
 
     pixel = True
     if pixel:
-        print(f"??? : {ticker}")
+        #print(f"??? : {ticker}")
         vaiv.load_df('pixel')
         make_pixel(lines, patches, fig, c, vaiv)
     plt.close(fig)

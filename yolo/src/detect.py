@@ -103,7 +103,7 @@ def detect_light(
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             p, s, im0 = path, '', im0s
-            print(f"i : {i}, det : {det}")
+            #print(f"i : {i}, det : {det}")
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)
@@ -126,7 +126,7 @@ def detect_light(
 
                     probability = round(float(conf), 3)
                     
-                    print(f"==== Ticker : {stockimg.ticker} / Signal : {signal} / Probability : {probability} / last date : {stockimg.get_box_date(xmin, xmax)[-1]}")
+                    #print(f"==== Ticker : {stockimg.ticker} / Signal : {signal} / Probability : {probability} / last date : {stockimg.get_box_date(xmin, xmax)[-1]}")
                     if stockimg.last_signal(xmin, xmax, 1):
                         dates = stockimg.get_box_date(xmin, xmax)
                         # print('Last: ', dates)
