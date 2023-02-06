@@ -14,4 +14,6 @@ kosdaq_list = KOSDAQ_df.index.to_list()
 #detect_all("2022-12-01")
 print("\n---Detection start---")
 #print(yolo_buy(['095570', '003280', '227840'], '2022-11-25', 'KOSPI'))
-print(yolo_buy(kospi_list, '2022-11-25', 'KOSPI'))
+
+# Buy Signal만 뽑기
+res_tuple = yolo_buy(kospi_list[:3], '2022-11-25', 'KOSPI')[1]

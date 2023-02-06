@@ -33,7 +33,7 @@ def detect_only_cpu(
             source='inference/images',
             files=None,     # detect 할 이미지
             imgsz=640,
-            conf_thres=0,
+            conf_thres=0.25,
             iou_thres=0.45,
             device='',
             trace=False,
@@ -171,7 +171,7 @@ def detect_light(
             source='inference/images',
             files=None,     # detect 할 이미지
             imgsz=640,
-            conf_thres=0,
+            conf_thres=0.25,
             iou_thres=0.45,
             device='',
             trace=False,
@@ -303,7 +303,7 @@ def detect(
             weights='yolov7.pt',
             source='inference/images',
             imgsz=640,
-            conf_thres=0,
+            conf_thres=0.25,
             iou_thres=0.45,
             device='',
             save_txt=False,

@@ -70,8 +70,8 @@ def default_config():
 def default_opt():
     opt = {
         'weights': '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt',
-        'conf_thres': 0.6,
-        'device': '0',
+        'conf_thres': 0.25,
+        'device': 'cpu',
         'model': model,
         'imgsz': 640,
         'iou_thres': 0.45,

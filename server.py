@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from toppick import toppick_detect
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 CORS(app)
 
 @app.route("/toppicks", methods=['GET', 'POST'])
-def process():
+def toppick_show():
     option = request.json
     print(option)
     result = { 'stocks' : 'samsung'}

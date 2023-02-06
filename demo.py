@@ -57,9 +57,13 @@ def yolo_buy(tickerlist, s_date, market):
     global yolo_detect
     label = {'buy': 1.0, 'sell': 0.0, 'hold': 0.0, 'FileNotFoundError': 0.0}
     market = market.lower().capitalize()
-    XKRX = xcals.get_calendar("XKRX")
-    t_date = XKRX.next_session(s_date).strftime('%Y-%m-%d')
-    today = datetime.now().strftime('%Y-%m-%d')
+
+    # XKRX = xcals.get_calendar("XKRX")
+    # t_date = XKRX.next_session(s_date).strftime('%Y-%m-%d')
+    # today = datetime.now().strftime('%Y-%m-%d')
+
+    t_date = s_date
+    
     start = time.time()
     # if trade_date != t_date:
     #     yolo_detect.update({'Kospi': {}, 'Kosdaq': {}})
