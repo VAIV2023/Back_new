@@ -51,12 +51,13 @@ def login():
             user_info = {
                 'user_id': id,
                 'account_list': [],
+                'accounts': {}
             }
             db.user.insert_one(user_info)
             success = 0
         
     res_dict['success'] = success
-    return jsonify(res_dict)
+    return res_dict
 
 @app.route("/createaccount", methods=['GET', 'POST'])
 def createAccount():
@@ -74,137 +75,28 @@ def createAccount():
     db = client.portfolio
     for d in db['user'].find():
         if d['user_id'] == id:
-            account_list = d['account_list']
+            accounts = d['accounts']
             
-            if code not in account_list:
+            if code not in accounts:
                 account = {
-                    'name': name,
-                    'createDate': date,
-                    'isOperating': 0,
-                    'dailyRealProfit': {}, 
-                    'dailyMarketValue': {},
-                    'sellStock': [],
-                    'holdingStock': [],
-                    'totalBuy': 0,
-                    'realGain': 0,
-                    'realProfit': 0,
+
                 }
 
-                # account_list에 account 추가
-                account_list.append(code)
+                # accounts에 account 업데이트
+                accounts[code] = account
 
-                # account_list 업데이트, account 추가 (DB)
+                # accounts 업데이트 (DB)
                 db.user.update_one(
                     {"user_id": id},
                     {
                         "$set": {
-                            code: account,
-                            "account_list": account_list,
+                            "accounts": accounts,
                         }
                     }
                 )
-                success = 1
 
             else:
                 print("계좌 생성 - 이미 존재!!")
-                success = 0
-
-            break
-    
-    res_dict['success'] = success
-    return jsonify(res_dict)
-
-@app.route("/deleteaccount", methods=['GET', 'POST'])
-def deleteAccount():
-    # success(1) : 계좌 삭제 성공
-    # success(0) : 해당 코드를 가진 계좌가 이미 존재하지 않음
-    # success(-1) : 에러 또는 id 존재x
-    option = request.json
-    id = option['id']
-    code = option['code']
-    res_dict = {}
-    success = -1
-
-    db = client.portfolio
-    for d in db['user'].find():
-        if d['user_id'] == id:
-            account_list = d['account_list']
-            
-            if code in account_list:
-                # account_list에서 해당 code 제거
-                account_list.remove(code)
-
-                # 해당 code가 key인 field 제거 (DB)
-                db.user.update_one(
-                    {"user_id": id},
-                    {
-                        "$unset": {
-                            code: True,
-                        }
-                    }
-                )
-
-                # account_list 업데이트 (DB)
-                db.user.update_one(
-                    {"user_id": id},
-                    {
-                        "$set": {
-                            "account_list": account_list,
-                        }
-                    }
-                )
-                success = 1
-
-            else:
-                print("계좌 삭제 - 존재하지 않는 계좌 코드!!!")
-                success = 0
-
-            break
-    
-    res_dict['success'] = success
-    return jsonify(res_dict)
-
-@app.route("/dailymarketvalue", methods=['GET', 'POST'])
-def dailyMarketValue():
-    # success(1) : 성공
-    # success(-1) : 에러 또는 id 존재x
-    option = request.json
-    id = option['id']
-    code = option['code']
-    res_dict = {}
-    success = -1
-
-    db = client.portfolio
-    for d in db['user'].find():
-        if d['user_id'] == id:
-            account_list = d['account_list']
-            
-            if code in account_list:
-                res_dict = d[code]['dailyMarketValue']
-                success = 1
-
-    return jsonify(res_dict)
-
-@app.route("/dailyrealprofit", methods=['GET', 'POST'])
-def dailyRealProfit():
-    # success(1) : 성공
-    # success(-1) : 에러 또는 id 존재x
-    option = request.json
-    id = option['id']
-    code = option['code']
-    res_dict = {}
-    success = -1
-
-    db = client.portfolio
-    for d in db['user'].find():
-        if d['user_id'] == id:
-            account_list = d['account_list']
-            
-            if code in account_list:
-                res_dict = d[code]['dailyRealProfit']
-                success = 1
-
-    return jsonify(res_dict)
 
 
 @app.route("/showtoppick", methods=['GET', 'POST'])
@@ -246,6 +138,7 @@ def toppick_show():
 
     return jsonify(res_dict)
 
+
 @app.route("/buytoppick", methods=['GET', 'POST'])
 def toppick_buy():
     # success(1) : 새롭게 구매
@@ -267,12 +160,12 @@ def toppick_buy():
     db = client.portfolio
     for d in db['user'].find():
         if d['user_id'] == id:
-            account_list = d['account_list']
-            if code in account_list:
-                account = d[code]
+            accounts = d['accounts']
+            if code in accounts:
+                account = accounts[code]
 
                 # 같은 날에 이미 담은 종목이 있는지 확인
-                holdingStock = account['holdingStock']
+                holdingStock = accounts[code]['holdingStock']
                 for i in range(len(holdingStock)):
                     stock = holdingStock[i]
                     if stock['ticker'] == ticker and stock['buyDate'] == date:
@@ -297,15 +190,15 @@ def toppick_buy():
                     holdingStock.append(stock)
                     success = 1
 
-                # account에 holdingStock 정보 업데이트
-                account['holdingStock'] = holdingStock
+                # accounts에 holdingStock 정보 업데이트
+                accounts[code]['holdingStock'] = holdingStock
 
-                # 해당 account 업데이트 (DB)
+                # accounts 업데이트 (DB)
                 db.user.update_one(
                     {"user_id": id},
                     {
                         "$set": {
-                            code: account,
+                            "accounts": accounts,
                         }
                     }
                 )
@@ -317,7 +210,7 @@ def toppick_buy():
             break
 
     res_dict['success'] = success
-    return jsonify(res_dict)
+    return success
             
 
 
