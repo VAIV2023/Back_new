@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pymongo import MongoClient
 
 from datetime import datetime, timedelta
 import exchange_calendars as ecals 
@@ -9,6 +10,8 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 CORS(app)
 
+client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@43.201.8.26', 27017)
+
 @app.route("/example", methods=['GET', 'POST'])
 def example():
     option = request.json
@@ -16,6 +19,35 @@ def example():
     result = { 'stocks' : 'samsung'}
     
     return jsonify(result)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    # success(1) : 로그인 성공
+    # success(0) : 계정 등록
+    # success(-1) : 에러
+    option = request.json
+    id = option['id']
+    success = -1
+    res_dict = {}
+
+    db = client.portfolio
+    for d in db['user'].find():
+        if d['user_id'] == id:
+            success = 1
+    
+    if sucess == -1:
+        # DB에 계정 새로 등록
+        print("=== Resigter ===")
+        print(f"id : {id}")
+        user_info = {
+            'user_id': id,
+            'accounts': {}
+        }
+        db.user.insert_one(user_info)
+    
+    res_dict['success'] = success
+    return res_dict
+    
 
 @app.route("/showtoppick", methods=['GET', 'POST'])
 def toppick_show():
@@ -47,6 +79,13 @@ def toppick_show():
     
     print(res_dict)
     return jsonify(res_dict)
+
+
+@app.route("/buytoppick", methods=['GET', 'POST'])
+def toppick_buy():
+    option = request.json
+    id = option['id']
+
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000)

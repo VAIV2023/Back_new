@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pymongo import MongoClient
 
 from datetime import datetime, timedelta
 import exchange_calendars as ecals 
@@ -34,4 +35,29 @@ def toppick_show():
     print(res_dict)
     return res_dict
 
-toppick_show()
+def register():
+    client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@43.201.8.26', 27017)
+
+    id = 'temp'
+    success = -1
+    res_dict = {}
+
+    db = client.portfolio
+    for d in db['user'].find():
+        if d['user_id'] == id:
+            success = 1
+    
+    if success == -1:
+        # DB에 계정 새로 등록
+        print("=== Resigter ===")
+        user_info = {
+            'user_id': id,
+            'accounts': {}
+        }
+        db.user.insert_one(user_info)
+        success = 0
+    
+    return success
+
+
+print(register())
