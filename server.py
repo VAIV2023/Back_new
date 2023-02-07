@@ -117,7 +117,7 @@ def createAccount():
 @app.route("/deleteaccount", methods=['GET', 'POST'])
 def deleteAccount():
     # success(1) : 계좌 삭제 성공
-    # success(0) : 해당 코드를 가진 계좌가 이미 존재하지 않음
+    # success(0) : 해당 코드를 가진 계좌가 존재하지 않음
     # success(-1) : 에러 또는 id 존재x
     option = request.json
     id = option['id']
@@ -164,6 +164,29 @@ def deleteAccount():
     res_dict['success'] = success
     return jsonify(res_dict)
 
+@app.route("/checkaccount", methods=['GET', 'POST'])
+def checkAccount():
+    option = request.json
+    id = option['id']
+    res_dict = {}
+
+    db = client.portfolio
+    for d in db['user'].find():
+        if d['user_id'] == id:
+            account_list = d['account_list']
+            for code in account_list:
+                account = {
+                    'name': d[code]['name'],
+                    'createDate': d[code]['createDate'],
+                }
+                res_dict[code] = account
+            success = 1
+            break
+    
+    return jsonify(res_dict)
+
+    
+
 @app.route("/dailymarketvalue", methods=['GET', 'POST'])
 def dailyMarketValue():
     # success(1) : 성공
@@ -207,9 +230,10 @@ def dailyRealProfit():
     return jsonify(res_dict)
 
 
+
 @app.route("/showtoppick", methods=['GET', 'POST'])
 @cache.cached(timeout=50)
-def toppick_show():
+def showToppick():
     # 오늘 날짜 그대로 넣으면 안되는구나..
     # 오늘이 개장일이면 오늘 날짜 그대로 입력
     # 오늘이 폐장일이면 ?? 다음에 올 개장일로 입력해야 됨.
@@ -247,14 +271,14 @@ def toppick_show():
     return jsonify(res_dict)
 
 @app.route("/buytoppick", methods=['GET', 'POST'])
-def toppick_buy():
+def buytoppick():
     # success(1) : 새롭게 구매
     # success(0) : 기존 구매 내역에 수량만 추가
     # success(-1) : 에러 또는 id/account가 존재하지 않음
 
     option = request.json
     id = option['id']
-    code = option['account']
+    code = option['code']
     ticker = option['ticker']
     stockName = option['stockName']
     quantity = option['quantity']
@@ -284,7 +308,7 @@ def toppick_buy():
                         break
                 
                 if success == -1:   # 기존 구매 내역이 없을 경우
-                    buyTotalPrice = quantity * buyPrice
+                    buyTotalPrice = int(quantity) * int(buyPrice)
                     stock = {
                         'ticker': ticker,   # 종목 코드
                         'stockName': stockName,
@@ -318,8 +342,17 @@ def toppick_buy():
 
     res_dict['success'] = success
     return jsonify(res_dict)
-            
 
+
+@app.route("/startportfolio", methods=['GET', 'POST'])
+def startPortfolio():
+    # success(1) : 성공
+    # success(-1) : 에러 또는 id 존재x
+    option = request.json
+    id = option['id']
+    code = option['code']
+    res_dict = {}
+    success = -1
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000)
