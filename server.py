@@ -17,7 +17,7 @@ CORS(app)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 
-client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@43.201.8.26', 27017)
+client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@3.37.180.191', 27017)
 
 @app.route("/example", methods=['GET', 'POST'])
 def example():
@@ -236,7 +236,6 @@ def dailyRealProfit():
 
 
 @app.route("/showtoppick", methods=['GET', 'POST'])
-@cache.cached(timeout=50)
 def showToppick():
     # 오늘 날짜 그대로 넣으면 안되는구나..
     # 오늘이 개장일이면 오늘 날짜 그대로 입력
@@ -251,19 +250,33 @@ def showToppick():
     #    date = next_date.strftime("%Y-%m-%d")
     
     # temp code
-    date = "2023-02-06"
+    date = "2023-02-08"
+    last_date = "20230207"
 
     res_dict = {'KOSPI' : [], 'KOSDAQ' : []}
     market_list = ['KOSPI', 'KOSDAQ']
-    # static/toppick_csv/{market}/날짜.txt 에 저장되어있는 toppick 종목
+    # static/toppick/{market}/날짜.csv 에 저장되어있는 toppick 종목
     # line by line으로 읽어와서 리턴
     for market in market_list:
-        f = open(f"/home/ubuntu/Back_new/static/toppick/{market}/{date}.txt", "r")
+        df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market}/{date}.csv", index_col=False)
+        buyPick = df.loc[df['Signal'] == 'buy']
+        todayPick = buyPick.loc[df['End'] == int(last_date)]
+
+        # confidence score 순으로 정렬
+        sortedPick = todayPick.sort_values('Probability', ascending=False)
+
         lst = []
-        while True:
-            line = f.readline().strip()
-            if not line: break
-            lst.append(line)
+        for row in sortedPick.values:
+            # ticker가 integer로 저장되면서 앞에 있는 0 없어지는 오류 수정 (6자리로 만들기)
+            ticker = str(row[1])
+            while len(ticker) < 6:
+                ticker = '0' + ticker
+            data = {
+                'ticker': ticker,
+                'start': str(row[4]),
+                'end': str(row[5]),
+            }
+            lst.append(data)
 
         res_dict[market] = lst
 

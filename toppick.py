@@ -38,8 +38,8 @@ def toppick_detect():
     KOSPI_df = stock_df.loc[stock_df['Market'] == 'STK']
     KOSDAQ_df = stock_df.loc[stock_df['Market'] == 'KSQ']
 
-    kospi_list = KOSPI_df.index.to_list()[350:450]
-    kosdaq_list = KOSDAQ_df.index.to_list()[350:450]
+    kospi_list = KOSPI_df.index.to_list()[750:]
+    kosdaq_list = KOSDAQ_df.index.to_list()[750:1000]
 
     # Detection 시작 (yolo_buy 사용)
     print(f"\n---Detection start : {date}---")
@@ -68,7 +68,7 @@ def toppick_detect():
                 info = res_detect[ticker]
                 signal = info[0]
                 if signal == 'buy' or signal == 'sell':
-                    ticker_.append(ticker)
+                    ticker_.append(str(ticker))
                     signal_.append(signal)
                     prob_.append(info[1])
                     close_.append(info[2])
@@ -78,8 +78,8 @@ def toppick_detect():
                     end = info[4]
                     end_t = datetime.strptime(end, "%Y-%m-%d")
                     end = end_t.strftime("%Y%m%d")
-                    start_.append(start)
-                    end_.append(end)
+                    start_.append(str(start))
+                    end_.append(str(end))
             time.sleep(10)
 
         # static/toppick_csv/{market}/날짜.csv에 저장

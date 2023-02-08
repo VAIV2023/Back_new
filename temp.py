@@ -36,7 +36,7 @@ def toppick_show():
     return res_dict
 
 def register():
-    client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@43.201.8.26', 27017)
+    client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@3.37.180.191', 27017)
 
     id = 'temp'
     success = -1
