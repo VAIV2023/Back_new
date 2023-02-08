@@ -363,6 +363,7 @@ def startPortfolio():
     res_dict = {}
     success = -1
 
+    db = client.portfolio
     # 거래일인지 확인
     XKRX = ecals.get_calendar("XKRX") # 한국 코드
     date = datetime.today().strftime("%Y-%m-%d")
