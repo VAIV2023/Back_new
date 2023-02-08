@@ -81,6 +81,7 @@ def createAccount():
                     'name': name,
                     'createDate': date,
                     'isOperating': 0,
+                    'balance': 20000000,
                     'dailyRealProfit': {}, 
                     'dailyMarketValue': {},
                     'sellStock': [],
@@ -169,6 +170,7 @@ def checkAccount():
     option = request.json
     id = option['id']
     res_dict = {}
+    success = -1
 
     db = client.portfolio
     for d in db['user'].find():
@@ -183,6 +185,7 @@ def checkAccount():
             success = 1
             break
     
+    res_dict['success'] = success
     return jsonify(res_dict)
 
     
@@ -274,7 +277,7 @@ def showToppick():
 def buytoppick():
     # success(1) : 새롭게 구매
     # success(0) : 기존 구매 내역에 수량만 추가
-    # success(-1) : 에러 또는 id/account가 존재하지 않음
+    # success(-1) : 에러 또는 id/account가 존재하지 않음 또는 잔고부족
 
     option = request.json
     id = option['id']
@@ -287,6 +290,8 @@ def buytoppick():
     success = -1
     res_dict = {}
     
+    # 오늘이 거래일이 아닌 경우 막아놓도록 해야됨
+
     # 존재하는 id, account인지 확인
     db = client.portfolio
     for d in db['user'].find():
@@ -294,6 +299,9 @@ def buytoppick():
             account_list = d['account_list']
             if code in account_list:
                 account = d[code]
+                # 잔고가 부족한지 확인
+                if account['balance'] < (int(quantity) * int(buyPrice)):
+                    success = -1
 
                 # 같은 날에 이미 담은 종목이 있는지 확인
                 holdingStock = account['holdingStock']
@@ -301,7 +309,7 @@ def buytoppick():
                     stock = holdingStock[i]
                     if stock['ticker'] == ticker and stock['buyDate'] == date:
                         # 기존에 담은 거에다가 수량만 추가 (같은 날에 어느 시기에 사든 전날 종가는 변하지 않으니까!!)
-                        stock['quantity'] += quantity
+                        stock['quantity'] = int(stock['quantity']) + int(quantity)
                         # holdingStock에 stock 정보 업데이트
                         holdingStock[i] = stock
                         success = 0
@@ -314,8 +322,7 @@ def buytoppick():
                         'stockName': stockName,
                         'quantity': quantity,   # 수량
                         'buyDate': date,     # 매수 날짜
-                        'buyPrice': buyPrice,   # 매수 가격
-                        'buyTotalPrice': buyTotalPrice,     # 총 매수 가격    
+                        'buyPrice': buyPrice,   # 매수 가격  
                     }
                     # holdingStock에 stock 정보 업데이트
                     holdingStock.append(stock)
@@ -347,12 +354,37 @@ def buytoppick():
 @app.route("/startportfolio", methods=['GET', 'POST'])
 def startPortfolio():
     # success(1) : 성공
-    # success(-1) : 에러 또는 id 존재x
+    # success(0) : id 존재 x
+    # success(-1) : 에러 또는 거래일이 아님
     option = request.json
     id = option['id']
     code = option['code']
     res_dict = {}
     success = -1
+
+    # 거래일인지 확인
+    XKRX = ecals.get_calendar("XKRX") # 한국 코드
+    if XKRX.is_session(date):
+        # temp code
+        date = "2023-02-06"
+
+        # id, 계좌 확인 (이미 포트폴리오 관리 중인지 확인)
+        for d in db['user'].find():
+            if d['user_id'] == id:
+                account_list = d['account_list']
+                if code in account_list:
+                    print(f"=== 계좌 {code} 자산 운용 시작 : {date} ===")
+                    
+                    success = 1
+        success = 0
+    else:
+        success = -1
+
+    
+
+    
+
+
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000)
