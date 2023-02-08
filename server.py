@@ -82,6 +82,7 @@ def createAccount():
                     'createDate': date,
                     'isOperating': 0,
                     'balance': 20000000,
+                    'buyStockNum': 0,
                     'dailyRealProfit': {}, 
                     'dailyMarketValue': {},
                     'sellStock': [],
@@ -364,6 +365,7 @@ def startPortfolio():
 
     # 거래일인지 확인
     XKRX = ecals.get_calendar("XKRX") # 한국 코드
+    date = datetime.today().strftime("%Y-%m-%d")
     if XKRX.is_session(date):
         # temp code
         date = "2023-02-06"
@@ -373,10 +375,15 @@ def startPortfolio():
             if d['user_id'] == id:
                 account_list = d['account_list']
                 if code in account_list:
-                    print(f"=== 계좌 {code} 자산 운용 시작 : {date} ===")
-                    
-                    success = 1
-        success = 0
+                    # 포트폴리오 관리 실행이 이미 되어있는 계좌인지 확인
+                    if d[code]['isOperating'] == 0:
+                        print(f"=== 계좌 {code} 자산 운용 시작 : {date} ===")
+                        success = 1
+                    else:
+                        success = -1
+                else:
+                    success = -1
+                break
     else:
         success = -1
 
