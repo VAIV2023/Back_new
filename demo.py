@@ -6,6 +6,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from backtesting import backtest
 import find_sell as yd
+import find_sell_new as yd_new
 from stockdata import load_naver, load_csv_data, modifyStock, nullCheck
 # from temp import find_sell_date
 # from pykrx import stock
@@ -77,6 +78,38 @@ def yolo_buy(tickerlist, s_date, market):
     #     detect = yd.detect_first(tickerlist, today, market=market)
     #     yolo_detect[market] = detect
     detect = yd.detect_first(tickerlist, t_date, market=market)
+    # else:
+    #     detect = yolo_detect.get(market)
+    print(f'{len(tickerlist)} ticker Time: {time.time() - start}s')
+    detectlist = [['Yolo', label[detect[ticker][0]], round(100 * detect[ticker][1], 1)] for ticker in tickerlist]
+    # print(detectlist)
+    return detectlist, detect
+
+def yolo_buy_new(tickerlist, s_date, market):
+    global trade_date
+    global yolo_detect
+    label = {'buy': 1.0, 'sell': 0.0, 'hold': 0.0, 'FileNotFoundError': 0.0}
+    market = market.lower().capitalize()
+
+    # XKRX = xcals.get_calendar("XKRX")
+    # t_date = XKRX.next_session(s_date).strftime('%Y-%m-%d')
+    # today = datetime.now().strftime('%Y-%m-%d')
+
+    t_date = s_date
+    
+    start = time.time()
+    # if trade_date != t_date:
+    #     yolo_detect.update({'Kospi': {}, 'Kosdaq': {}})
+    #     trade_date = t_date
+    #     try:
+    #         shutil.rmtree('/home/ubuntu/Back_new/static/predict')
+    #     except FileNotFoundError:
+    #         pass
+    # if not yolo_detect.get(market):
+    #     # detect = yd.detect_list(tickerlist, trade_date, market=market)
+    #     detect = yd.detect_first(tickerlist, today, market=market)
+    #     yolo_detect[market] = detect
+    detect = yd_new.detect_first(tickerlist, t_date, market=market)
     # else:
     #     detect = yolo_detect.get(market)
     print(f'{len(tickerlist)} ticker Time: {time.time() - start}s')

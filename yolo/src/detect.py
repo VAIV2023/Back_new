@@ -42,6 +42,9 @@ def detect_light(
 
     (save_dir).mkdir(parents=True, exist_ok=True)
 
+    print(f"!!!! weights: {weights}")
+    print(f"!!!! conf_thres: {conf_thres}")
+
     # Load model
     if not model:
         model = attempt_load(weights, map_location=device)  # load FP32 model

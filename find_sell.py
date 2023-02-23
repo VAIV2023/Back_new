@@ -376,6 +376,7 @@ def detect_first(tickers, last_date, market):
         vaiv.set_kwargs(ticker=ticker)
         vaiv.set_kwargs(last_date=last_date)
         stock = make_stock(vaiv, end=last_date, save=False)
+        print(stock)
         e2 = time.time()
         stock_t += e2 - s2
 
@@ -386,6 +387,7 @@ def detect_first(tickers, last_date, market):
         if condition1:
             start = stock.index[-245]
             last_date = stock.index[-1]  # 임시
+            #print(f"새로운날짜: {last_date}")
             vaiv.set_kwargs(last_date=last_date)  # 임시
             pred = pd.Series({'Start': start, 'End': last_date, 'Date': last_date})
             price[ticker] = stock.loc[last_date, 'Close']

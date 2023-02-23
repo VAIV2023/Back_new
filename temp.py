@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 import exchange_calendars as ecals 
 import pandas as pd
 
+from pykrx import stock
+
 def toppick_show():
 
     # 오늘 날짜 그대로 넣으면 안되는구나..
@@ -60,4 +62,16 @@ def register():
     return success
 
 
-print(register())
+def sell_all():
+    date_format = datetime.today().strftime("%Y%m%d")
+    df = stock.get_market_ohlcv_by_date(date_format, date_format, '095570')
+    print(df.iloc[0]['종가'])
+
+def get_price():
+    df = stock.get_market_ohlcv_by_date(fromdate="20210501", todate="20210520", ticker="005930")
+    print(df)
+    close = float(df.iloc[0]['종가'])
+    print(close)
+    print(type(close))
+
+get_price()

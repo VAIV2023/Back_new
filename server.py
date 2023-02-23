@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 import exchange_calendars as ecals 
 import pandas as pd
 from time import time
+import subprocess
+
+from pykrx import stock
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -18,6 +21,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 
 client = MongoClient('mongodb://vaivwinter:vaivwinter2023!@3.37.180.191', 27017)
+
+XKRX = ecals.get_calendar("XKRX")  # 개장일 가져오기
 
 @app.route("/example", methods=['GET', 'POST'])
 def example():
@@ -172,6 +177,7 @@ def checkAccount():
     id = option['id']
     res_dict = {}
     success = -1
+    accountList = []
 
     db = client.portfolio
     for d in db['user'].find():
@@ -179,13 +185,16 @@ def checkAccount():
             account_list = d['account_list']
             for code in account_list:
                 account = {
+                    'code': code,
                     'name': d[code]['name'],
                     'createDate': d[code]['createDate'],
                 }
-                res_dict[code] = account
+                #res_dict[code] = account
+                accountList.append(account)
             success = 1
             break
     
+    res_dict['accounts'] = accountList
     res_dict['success'] = success
     return jsonify(res_dict)
 
@@ -237,30 +246,33 @@ def dailyRealProfit():
 
 @app.route("/showtoppick", methods=['GET', 'POST'])
 def showToppick():
-    # 오늘 날짜 그대로 넣으면 안되는구나..
-    # 오늘이 개장일이면 오늘 날짜 그대로 입력
-    # 오늘이 폐장일이면 ?? 다음에 올 개장일로 입력해야 됨.
     start = time()
 
-    # 이거 오래걸리는 코드니까 수정하기
-    #XKRX = ecals.get_calendar("XKRX") # 한국 코드
-    #date = datetime.today().strftime("%Y-%m-%d")
-    #if not XKRX.is_session(date):
-    #    next_date = XKRX.next_open(pd.Timestamp.today()) # 다음 개장일은 언제인지 확인
-    #    date = next_date.strftime("%Y-%m-%d")
-    
+    today = datetime.today().strftime("%Y-%m-%d")
+    past = (datetime.today() - timedelta(days=20)).strftime("%Y-%m-%d")
+    pred_dates = XKRX.sessions_in_range(past, today)
+    open_dates = pred_dates.strftime("%Y%m%d").tolist()
+
+    last_date = open_dates[-2]
+    if not XKRX.is_session(today):   # 오늘이 개장일이 아닌 경우
+        last_date = open_dates[-1]
+    last_date_t = datetime.strptime(last_date, "%Y%m%d")
+    last_date_format = last_date_t.strftime("%Y-%m-%d")
+
     # temp code
-    date = "2023-02-08"
-    last_date = "20230207"
+    #date = "2023-02-08"
+    #last_date = "20230207"
 
     res_dict = {'KOSPI' : [], 'KOSDAQ' : []}
     market_list = ['KOSPI', 'KOSDAQ']
     # static/toppick/{market}/날짜.csv 에 저장되어있는 toppick 종목
     # line by line으로 읽어와서 리턴
     for market in market_list:
-        df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market}/{date}.csv", index_col=False)
+        df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market}/{last_date_format}.csv", index_col=False)
         buyPick = df.loc[df['Signal'] == 'buy']
+        print(buyPick)
         todayPick = buyPick.loc[df['End'] == int(last_date)]
+        print(todayPick)
 
         # confidence score 순으로 정렬
         sortedPick = todayPick.sort_values('Probability', ascending=False)
@@ -374,15 +386,14 @@ def startPortfolio():
     id = option['id']
     code = option['code']
     res_dict = {}
-    success = -1
+    success = -2
 
     db = client.portfolio
     # 거래일인지 확인
-    XKRX = ecals.get_calendar("XKRX") # 한국 코드
     date = datetime.today().strftime("%Y-%m-%d")
     if XKRX.is_session(date):
         # temp code
-        date = "2023-02-06"
+        #date = "2023-02-06"
 
         # id, 계좌 확인 (이미 포트폴리오 관리 중인지 확인)
         for d in db['user'].find():
@@ -392,6 +403,94 @@ def startPortfolio():
                     # 포트폴리오 관리 실행이 이미 되어있는 계좌인지 확인
                     if d[code]['isOperating'] == 0:
                         print(f"=== 계좌 {code} 자산 운용 시작 : {date} ===")
+                        # 포트폴리오 관리 실행 여부 변경
+                        account = d[code]
+                        account['isOperating'] = 1
+                        db.user.update_one(
+                            {"user_id": id},
+                            {
+                                "$set": {
+                                    code: account,
+                                }
+                            }
+                        )
+                        subprocess.call(f'nohup python3 /home/ubuntu/Back_new/portfolio.py --id {id} --code {code} > portfolio_{id}_{code}.out &', shell=True)
+                        success = 1
+                    else:
+                        print("!!! ERROR: start portfoilo - 포트폴리오 관리 실행이 이미 되어있는 계좌")
+                        success = 0
+                else:
+                    print("!!! ERROR: start portfoilo - 해당 계좌 존재x")
+                    success = -1
+                break
+    else:
+        print("!!! ERROR: start portfoilo - 거래일이 아님")
+        success = -1
+    
+    res_dict['success'] = success
+    return res_dict
+
+
+@app.route("/endportfolio", methods=['GET', 'POST'])
+def endPortfolio():
+    # success(1) : 성공
+    # success(0) : id 존재 x
+    # success(-1) : 에러 또는 거래일이 아님
+    option = request.json
+    id = option['id']
+    code = option['code']
+    res_dict = {}
+    success = -1
+
+    db = client.portfolio
+    # 거래일인지 확인
+    date = datetime.today().strftime("%Y-%m-%d")
+    if XKRX.is_session(date):
+        # temp code
+        #date = "2023-02-06"
+
+        # id, 계좌 확인 (이미 포트폴리오 관리 중인지 확인)
+        for d in db['user'].find():
+            if d['user_id'] == id:
+                account_list = d['account_list']
+                if code in account_list:
+                    # 포트폴리오 관리 실행이 이미 되어있는 계좌인지 확인
+                    if d[code]['isOperating'] == 1:
+                        print(f"=== 계좌 {code} 자산 운용 종료 : {date} ===")
+                        # 포트폴리오 관리 실행 여부 변경
+                        account = d[code]
+                        account['isOperating'] = 0
+                        
+                        # 보유중인 주식 전량 매도
+                        holdingStock = account['holdingStock']
+                        sellStock = account['sellStock']
+                        account['holdingStock'] = []
+
+                        for stock in holdingStock:
+                            try:
+                                ticker = stock['ticker']
+                                date_format = datetime.today().strftime("%Y%m%d")
+                                df = stock.get_market_ohlcv_by_date(date_format, date_format, ticker)
+                                stock['sellDate'] = date
+                                buyPrice = stock['buyPrice']
+                                sellPrice = float(df.iloc[0]['종가'])
+                                stock['sellPrice'] = sellPrice
+                                stock['rate'] = (float(sellPrice)*0.9975 - float(buyPrice))/float(buyPrice) * 100
+                                sellStock.append(stock)
+                            except Exception as e:
+                                print(e)
+                                continue
+
+                        account['sellStock'] = sellStock
+                        db.user.update_one(
+                            {"user_id": id},
+                            {
+                                "$set": {
+                                    code: account,
+                                }
+                            }
+                        )
+
                         success = 1
                     else:
                         success = -1
@@ -400,8 +499,32 @@ def startPortfolio():
                 break
     else:
         success = -1
-
     
+    res_dict['success'] = success
+    return res_dict
+
+
+@app.route("/checkstocks", methods=['GET', 'POST'])
+def checkStocks():
+    option = request.json
+    id = option['id']
+    code = option['code']
+    res_dict = {}
+    success = -1
+
+    db = client.portfolio
+    for d in db['user'].find():
+        if d['user_id'] == id:
+            account_list = d['account_list']
+            if code in account_list:
+                account = d[code]
+                res_dict['sellStock'] = account['sellStock']
+                res_dict['holdingStock'] = account['holdingStock']
+            success = 1
+            break
+    
+    res_dict['success'] = success
+    return jsonify(res_dict)   
 
     
 
