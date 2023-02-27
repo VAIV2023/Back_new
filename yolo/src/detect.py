@@ -129,7 +129,7 @@ def detect_light(
 
                     probability = round(float(conf), 3)
                     
-                    #print(f"==== Ticker : {stockimg.ticker} / Signal : {signal} / Probability : {probability} / last date : {stockimg.get_box_date(xmin, xmax)[-1]}")
+                    print(f"==== Ticker : {stockimg.ticker} / Signal : {signal} / Probability : {probability} / last date : {stockimg.get_box_date(xmin, xmax)[-1]}")
                     if stockimg.last_signal(xmin, xmax, 1):
                         dates = stockimg.get_box_date(xmin, xmax)
                         # print('Last: ', dates)

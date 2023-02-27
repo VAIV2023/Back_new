@@ -22,11 +22,11 @@ def toppick_detect(version):
     # 오늘이 개장일이었는지 확인
     # 개장일이면 다음 개장일 날짜 불러와서 input으로 넣기
     # 개장일 아니면 pass
-    date = datetime.today().strftime("%Y-%m-%d")
-    if not XKRX.is_session(date):  # temp
-       return
+    #date = datetime.today().strftime("%Y-%m-%d")
+    #if not XKRX.is_session(date):  # temp
+    #   return
     
-    date = "2023-02-22"     # temp
+    date = "2023-02-24"     # temp
 
     # 전종목 티커 가져오기
     stock_df = pd.read_csv("/home/ubuntu/Back_new/static/Stock.csv", index_col=0)
@@ -74,6 +74,7 @@ def toppick_detect(version):
             # time.sleep(60)
             # continue
 
+            print(f"res_detect: {res_detect}")
             # Sell, Buy Signal 뜬 종목 코드만 뽑아서 result list에 저장
             for ticker in res_detect:
                 info = res_detect[ticker]
@@ -82,9 +83,9 @@ def toppick_detect(version):
                     end = info[4]
                     end_t = datetime.strptime(end, "%Y-%m-%d")
                     end = end_t.strftime("%Y%m%d")
-                    if end != datetime.today().strftime("%Y%m%d"):
-                        print(f"???? end : {end}")
-                        continue
+                    #if end != datetime.today().strftime("%Y%m%d"):
+                    #    print(f"???? end : {end}")
+                    #    continue
                     ticker_.append(str(ticker))
                     signal_.append(signal)
                     prob_.append(info[1])

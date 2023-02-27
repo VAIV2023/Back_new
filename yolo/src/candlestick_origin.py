@@ -67,6 +67,9 @@ def make_candlestick(vaiv: VAIV, stock, pred, pixel=True, save_dir=None):
     candlewidth = vaiv.kwargs.get('candlewidth')
     trade_date = pred['Date']
 
+    print(stock)
+    print(trade_date)
+
     vaiv.set_fname('png', ticker=ticker, date=trade_date)
     if save_dir:
         vaiv.set_path(save_dir)
@@ -79,12 +82,18 @@ def make_candlestick(vaiv: VAIV, stock, pred, pixel=True, save_dir=None):
 
     dates = stock.index.tolist()
     trade_index = dates.index(trade_date)
-    start_index = trade_index - 245
-    end_index = trade_index - 1
+    print(f"trade_index: {trade_index}")
+    start_index = trade_index - 244
+    end_index = trade_index - 0
+    length = end_index - start_index + 1
+    print(f"length: {length}")
     if start_index < 0:
         return
     start = dates[start_index]
     end = dates[end_index]
+
+    print(f"start: {start}")
+    print(f"end: {end}")
 
     try:
         c = stock.loc[start:end]
