@@ -263,32 +263,40 @@ def showToppick():
     #date = "2023-02-08"
     #last_date = "20230207"
 
-    res_dict = {'KOSPI' : [], 'KOSDAQ' : []}
-    market_list = ['KOSPI', 'KOSDAQ']
+    res_dict = {'KOSPI' : [], 'KOSDAQ' : [], 'KOSPI_new': [], 'KOSDAQ_new': []}
+    market_list = {'KOSPI' : 'KOSPI', 'KOSDAQ' : 'KOSDAQ', 'KOSPI_new' : 'KOSPI', 'KOSDAQ_new' : 'KOSDAQ'}
     # static/toppick/{market}/날짜.csv 에 저장되어있는 toppick 종목
     # line by line으로 읽어와서 리턴
     for market in market_list:
-        df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market}/{last_date_format}.csv", index_col=False)
-        buyPick = df.loc[df['Signal'] == 'buy']
-        print(buyPick)
-        todayPick = buyPick.loc[df['End'] == int(last_date)]
-        print(todayPick)
-
-        # confidence score 순으로 정렬
-        sortedPick = todayPick.sort_values('Probability', ascending=False)
-
         lst = []
-        for row in sortedPick.values:
-            # ticker가 integer로 저장되면서 앞에 있는 0 없어지는 오류 수정 (6자리로 만들기)
-            ticker = str(row[1])
-            while len(ticker) < 6:
-                ticker = '0' + ticker
-            data = {
-                'ticker': ticker,
-                'start': str(row[4]),
-                'end': str(row[5]),
-            }
-            lst.append(data)
+        try:
+            df = None
+            if market == 'KOSPI' or market == 'KOSDAQ':
+                df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market_list[market]}/{last_date_format}.csv", index_col=False)
+            else:
+                df = pd.read_csv(f"/home/ubuntu/Back_new/static/toppick/{market_list[market]}/{last_date_format}_new.csv", index_col=False)
+
+            buyPick = df.loc[df['Signal'] == 'buy']
+            print(buyPick)
+            todayPick = buyPick.loc[df['End'] == int(last_date)]
+            print(todayPick)
+
+            # confidence score 순으로 정렬
+            sortedPick = todayPick.sort_values('Probability', ascending=False)
+
+            for row in sortedPick.values:
+                # ticker가 integer로 저장되면서 앞에 있는 0 없어지는 오류 수정 (6자리로 만들기)
+                ticker = str(row[1])
+                while len(ticker) < 6:
+                    ticker = '0' + ticker
+                data = {
+                    'ticker': ticker,
+                    'start': str(row[4]),
+                    'end': str(row[5]),
+                }
+                lst.append(data)
+        except Exception as e:
+            print(e)
 
         res_dict[market] = lst
 

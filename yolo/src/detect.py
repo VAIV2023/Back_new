@@ -29,7 +29,7 @@ def detect_light(
             source='inference/images',
             files=None,
             imgsz=640,
-            conf_thres=0.6,
+            conf_thres=0.5,
             iou_thres=0.45,
             device='',
             trace=False,

@@ -29,7 +29,7 @@ from candlestick_origin import make_candlestick  # noqa: E402
 # device = '0'
 # device = select_device(device)
 device = torch.device('cpu')
-weights = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new.pt'
+weights = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new_tiny.pt'
 model = attempt_load(weights, map_location=device)
 
 def default_vaiv() -> VAIV:
@@ -69,7 +69,7 @@ def default_config():
 
 def default_opt():
     opt = {
-        'weights': '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new.pt',
+        'weights': '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new_tiny.pt',
         'conf_thres': 0.5,
         'device': 'cpu',
         'model': model,
@@ -108,7 +108,7 @@ def detect_list(tickers, last_date, market='Kospi'):
     vaiv.set_image()
     vaiv.set_labeling()
     opt = default_opt()
-    opt['weights'] = p / 'yolo' / 'weights_KOSPI50' / 'best_new.pt'
+    opt['weights'] = p / 'yolo' / 'weights_KOSPI50' / 'best_new_tiny.pt'
     sell_tickers = {}
     source = p / 'static' / 'today'
     save_dir = p / 'static' / 'predict'
@@ -214,7 +214,7 @@ def detect_MarketFiles(last_date, market):
     # fileDetectStart = time.time()
     files = list(map(str, filesPath.glob(f'*{last_date}.png')))
     # print('FileTime: ', time.time() - fileDetectStart)
-    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new_tiny.pt'
     df = detect_light(**opt, files=files)
     tickers = df.Ticker.tolist()
     probs = df.Probability.tolist()
@@ -298,7 +298,7 @@ def detect_Test(tickers, last_date, market):
     vaiv.make_dir(common=True, image=True)
     vaiv.set_labeling()
     opt = default_opt()
-    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new_tiny.pt'
 
     manager = mp.Manager()
     result_dict = manager.dict()
@@ -357,7 +357,7 @@ def detect_first(tickers, last_date, market):
     vaiv.make_dir(common=True, image=True)
     vaiv.set_labeling()
     opt = default_opt()
-    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new.pt'
+    opt['weights'] = '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best_new_tiny.pt'
 
     notFound = {}
     e1 = time.time()
@@ -369,6 +369,7 @@ def detect_first(tickers, last_date, market):
     ticker_count = len(tickers)
     price = {}
     files = []
+    last_date_old = last_date
 
     jobs = []
     for ticker in tickers:
@@ -376,6 +377,7 @@ def detect_first(tickers, last_date, market):
         vaiv.set_kwargs(ticker=ticker)
         vaiv.set_kwargs(last_date=last_date)
         stock = make_stock(vaiv, end=last_date, save=False)
+        print(stock)
         e2 = time.time()
         stock_t += e2 - s2
 
@@ -386,6 +388,9 @@ def detect_first(tickers, last_date, market):
         if condition1:
             start = stock.index[-245]
             last_date = stock.index[-1]  # 임시
+            if last_date != last_date_old:
+                continue
+            #print(f"새로운날짜: {last_date}")
             vaiv.set_kwargs(last_date=last_date)  # 임시
             pred = pd.Series({'Start': start, 'End': last_date, 'Date': last_date})
             price[ticker] = stock.loc[last_date, 'Close']

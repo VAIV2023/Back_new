@@ -70,7 +70,7 @@ def default_config():
 def default_opt():
     opt = {
         'weights': '/home/ubuntu/Back_new/yolo/weights_KOSPI50/best.pt',
-        'conf_thres': 0.6,
+        'conf_thres': 0.7,
         'device': 'cpu',
         'model': model,
         'imgsz': 640,
@@ -369,6 +369,7 @@ def detect_first(tickers, last_date, market):
     ticker_count = len(tickers)
     price = {}
     files = []
+    last_date_old = last_date
 
     jobs = []
     for ticker in tickers:
@@ -387,6 +388,8 @@ def detect_first(tickers, last_date, market):
         if condition1:
             start = stock.index[-245]
             last_date = stock.index[-1]  # 임시
+            if last_date != last_date_old:
+                continue
             #print(f"새로운날짜: {last_date}")
             vaiv.set_kwargs(last_date=last_date)  # 임시
             pred = pd.Series({'Start': start, 'End': last_date, 'Date': last_date})

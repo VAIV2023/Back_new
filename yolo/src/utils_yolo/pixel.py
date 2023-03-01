@@ -31,6 +31,7 @@ class StockImage:
             pixel = pd.read_csv(pixelPath, index_col=0)
             self.pixel = pixel
         except FileNotFoundError:
+            print("fileNotFoundError in pixel!!!!")
             pass
         
         self.stock = Stock(ticker, root=(Path.cwd().parent / 'Data')).load_data()

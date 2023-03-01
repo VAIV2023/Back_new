@@ -81,7 +81,7 @@ def yolo_buy(tickerlist, s_date, market):
     # else:
     #     detect = yolo_detect.get(market)
     print(f'{len(tickerlist)} ticker Time: {time.time() - start}s')
-    detectlist = [['Yolo', label[detect[ticker][0]], round(100 * detect[ticker][1], 1)] for ticker in tickerlist]
+    detectlist = [] #[['Yolo', label[detect[ticker][0]], round(100 * detect[ticker][1], 1)] for ticker in tickerlist]
     # print(detectlist)
     return detectlist, detect
 
@@ -113,7 +113,7 @@ def yolo_buy_new(tickerlist, s_date, market):
     # else:
     #     detect = yolo_detect.get(market)
     print(f'{len(tickerlist)} ticker Time: {time.time() - start}s')
-    detectlist = [['Yolo', label[detect[ticker][0]], round(100 * detect[ticker][1], 1)] for ticker in tickerlist]
+    detectlist = [] #[['Yolo', label[detect[ticker][0]], round(100 * detect[ticker][1], 1)] for ticker in tickerlist]
     # print(detectlist)
     return detectlist, detect
 

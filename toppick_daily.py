@@ -16,17 +16,17 @@ nohup python3 toppick.py & 로 실행하기
 def list_chunk(lst, n):     # n : 몇 개씩 분할할 것인지
     return [lst[i:i+n] for i in range(0, len(lst), n)]
 
-def toppick_detect(version):
+def toppick_detect(version, mar):
     XKRX = ecals.get_calendar("XKRX") # 한국 코드
 
     # 오늘이 개장일이었는지 확인
     # 개장일이면 다음 개장일 날짜 불러와서 input으로 넣기
     # 개장일 아니면 pass
-    #date = datetime.today().strftime("%Y-%m-%d")
-    #if not XKRX.is_session(date):  # temp
-    #   return
+    date = datetime.today().strftime("%Y-%m-%d")
+    if not XKRX.is_session(date):  # temp
+       return
     
-    date = "2023-02-28"     # temp
+    #date = "2023-02-27"     # temp
 
     # 전종목 티커 가져오기
     stock_df = pd.read_csv("/home/ubuntu/Back_new/static/Stock.csv", index_col=0)
@@ -40,10 +40,15 @@ def toppick_detect(version):
     print(f"\n---Detection start : {date}---")
 
     # temp code
-    kospi_list = []
+    if mar == 'kospi':
+        kosdaq_list = []
+    else:
+        kospi_list = []
     
     print("!!! number of KOSPI Tickers !!!")
     print(len(kospi_list))
+    print("!!! number of KOSDAQ Tickers !!!")
+    print(len(kosdaq_list))
     stock_dict = {}
     stock_dict = {'KOSPI' : kospi_list, 'KOSDAQ' : kosdaq_list}
     res_dict = {'KOSPI' : [], 'KOSDAQ' : []}
@@ -145,11 +150,13 @@ if __name__ == '__main__':
 
     # 실행 주기 설정
     # Updating Prediction Data
-    #schedule.every().day.at("17:00").do(toppick_detect, 'old')   # 매일 오후 5시에 update_stock 함수 실행
-    #schedule.every().day.at("18:00").do(toppick_detect, 'new')
-    toppick_detect('old')
+    schedule.every().day.at("17:00").do(toppick_detect, 'old', 'kospi')   # 매일 오후 5시에 update_stock 함수 실행
+    schedule.every().day.at("17:30").do(toppick_detect, 'old', 'kosdaq')   # 매일 오후 5시에 update_stock 함수 실행
+    schedule.every().day.at("18:00").do(toppick_detect, 'new', 'kospi')   # 매일 오후 5시에 update_stock 함수 실행
+    schedule.every().day.at("18:30").do(toppick_detect, 'new', 'kosdaq')
+    #toppick_detect('old')
     #toppick_detect('new')
     
     # 실행 시작
-    #while True:
-    #    schedule.run_pending()
+    while True:
+        schedule.run_pending()
